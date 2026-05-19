@@ -36,7 +36,7 @@ import Foundation
 public struct DefaultsKey<ValueType: DefaultsSerializable>: @unchecked Sendable {
     public let _key: String
     public let defaultValue: ValueType.T?
-    var isOptional: Bool
+    let isOptional: Bool
 
     public init(_ key: String, defaultValue: ValueType.T) {
         _key = key

@@ -30,7 +30,7 @@ import Foundation
 /// thread-safe but does not mark `Sendable`.
 @frozen
 public struct UncheckedSendable<Value>: @unchecked Sendable {
-    public var wrappedValue: Value
+    public let wrappedValue: Value
 
     public init(_ wrappedValue: Value) {
         self.wrappedValue = wrappedValue
