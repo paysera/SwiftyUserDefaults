@@ -41,18 +41,23 @@ import Foundation
 /// Defaults.launchCount += 1
 /// ```
 @dynamicMemberLookup
-public struct DefaultsAdapter<KeyStore: DefaultsKeyStore> {
+public struct DefaultsAdapter<KeyStore: DefaultsKeyStore>: Sendable {
+    private let defaultsBox: UncheckedSendable<UserDefaults>
 
-    public let defaults: UserDefaults
+    /// The wrapped `UserDefaults` instance. Held via `UncheckedSendable` because
+    /// Foundation does not expose `UserDefaults` as `Sendable`, even though
+    /// Apple documents the type as thread-safe.
+    public var defaults: UserDefaults { defaultsBox.wrappedValue }
+
     public let keyStore: KeyStore
 
     public init(defaults: UserDefaults, keyStore: KeyStore) {
-        self.defaults = defaults
+        self.defaultsBox = UncheckedSendable(defaults)
         self.keyStore = keyStore
     }
 
     @available(*, unavailable)
-    public subscript(dynamicMember member: String) -> Never {
+    public subscript(dynamicMember _: String) -> Never {
         fatalError()
     }
 

@@ -24,8 +24,15 @@
 
 import Foundation
 
-public protocol DefaultsKeyStore: Sendable {}
+/// Tiny helper that lets a non-`Sendable` value cross isolation boundaries
+/// under explicit programmer responsibility. Used at the single boundary where
+/// the library has to hold a `UserDefaults` instance, which Apple documents as
+/// thread-safe but does not mark `Sendable`.
+@frozen
+public struct UncheckedSendable<Value>: @unchecked Sendable {
+    public var wrappedValue: Value
 
-public struct DefaultsKeys: DefaultsKeyStore, Sendable {
-    public init() {}
+    public init(_ wrappedValue: Value) {
+        self.wrappedValue = wrappedValue
+    }
 }

@@ -32,10 +32,16 @@ import Foundation
 ///  var Defaults = DefaultsAdapter(defaults: UserDefaults(suiteName: "com.my.app")!, keyStore: DefaultsKeys())
 ///  ~~~
 
-public var Defaults = DefaultsAdapter<DefaultsKeys>(defaults: .standard, keyStore: .init())
+// swiftlint:disable identifier_name prefixed_toplevel_constant
+/// Mutable global so callers can swap in their own `UserDefaults(suiteName:)`
+/// at app startup. `nonisolated(unsafe)` makes the mutation explicit under
+/// Swift 6 strict concurrency; the value type (`DefaultsAdapter`) is itself
+/// `Sendable`, so the only risk is the initial assignment race, which has
+/// always been the caller's responsibility to do at startup before any reads.
+public nonisolated(unsafe) var Defaults = DefaultsAdapter<DefaultsKeys>(defaults: .standard, keyStore: .init())
+// swiftlint:enable identifier_name prefixed_toplevel_constant
 
 public extension UserDefaults {
-
     /// Returns `true` if `key` exists
     func hasKey<T>(_ key: DefaultsKey<T>) -> Bool {
         return object(forKey: key._key) != nil
@@ -57,8 +63,7 @@ public extension UserDefaults {
     }
 }
 
-internal extension UserDefaults {
-
+extension UserDefaults {
     func number(forKey key: String) -> NSNumber? {
         return object(forKey: key) as? NSNumber
     }
