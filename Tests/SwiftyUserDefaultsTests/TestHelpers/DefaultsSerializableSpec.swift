@@ -23,20 +23,19 @@
 //
 
 import Foundation
-import Quick
 import Nimble
-@testable import SwiftyUserDefaults
+import Quick
+@preconcurrency @testable import SwiftyUserDefaults
 
 protocol DefaultsSerializableSpec {
-    associatedtype Serializable: DefaultsSerializable & Equatable
+    associatedtype Serializable: DefaultsSerializable & Equatable & Sendable where Serializable.T: Sendable, Serializable.ArrayBridge.T: Sendable
 
     var defaultValue: Serializable.T { get }
     var customValue: Serializable.T { get }
     var keyStore: FrogKeyStore<Serializable> { get }
 }
 
-extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable.T == Serializable, Serializable.ArrayBridge.T == [Serializable.T] {
-
+extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable.T == Serializable, Serializable.ArrayBridge.T == [Serializable.T], Serializable: Sendable {
     func testValues() {
         when("key-default value") {
             var defaults: DefaultsAdapter<FrogKeyStore<Serializable>>!
@@ -69,11 +68,11 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("get a default value with dynamicMemberLookup") {
-                self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+                then("get a default value with dynamicMemberLookup") {
+                    self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
 
-                expect(defaults.testValue) == self.defaultValue
-            }
+                    expect(defaults.testValue) == self.defaultValue
+                }
             #endif
 
             then("get a default array value") {
@@ -83,11 +82,11 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("get a default array value with dynamicMemberLookup") {
-                self.keyStore.testArray = DefaultsKey<[Serializable]>("test", defaultValue: [self.defaultValue])
+                then("get a default array value with dynamicMemberLookup") {
+                    self.keyStore.testArray = DefaultsKey<[Serializable]>("test", defaultValue: [self.defaultValue])
 
-                expect(defaults.testArray) == [self.defaultValue]
-            }
+                    expect(defaults.testArray) == [self.defaultValue]
+                }
             #endif
 
             then("save a value") {
@@ -99,13 +98,13 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("save a value with dynamicMemberLookup") {
-                self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-                let expectedValue = self.customValue
-                defaults.testValue = expectedValue
+                then("save a value with dynamicMemberLookup") {
+                    self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+                    let expectedValue = self.customValue
+                    defaults.testValue = expectedValue
 
-                expect(defaults.testValue) == expectedValue
-            }
+                    expect(defaults.testValue) == expectedValue
+                }
             #endif
 
             then("save an array value") {
@@ -117,13 +116,13 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("save an array value with dynamicMemberLookup") {
-                self.keyStore.testArray = DefaultsKey<[Serializable]>("test", defaultValue: [self.defaultValue])
-                let expectedValue = [self.customValue]
-                defaults.testArray = expectedValue
+                then("save an array value with dynamicMemberLookup") {
+                    self.keyStore.testArray = DefaultsKey<[Serializable]>("test", defaultValue: [self.defaultValue])
+                    let expectedValue = [self.customValue]
+                    defaults.testArray = expectedValue
 
-                expect(defaults.testArray) == expectedValue
-            }
+                    expect(defaults.testArray) == expectedValue
+                }
             #endif
 
             then("remove a value") {
@@ -136,15 +135,15 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("remove a value with dynamicMemberLookup") {
-                self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-                defaults.testValue = self.customValue
+                then("remove a value with dynamicMemberLookup") {
+                    self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+                    defaults.testValue = self.customValue
 
-                removeObject("test")
+                    removeObject("test")
 
-                expect(defaults.hasKey(\.testValue)) == false
-                expect(defaults.testValue) == self.defaultValue
-            }
+                    expect(defaults.hasKey(\.testValue)) == false
+                    expect(defaults.testValue) == self.defaultValue
+                }
             #endif
 
             then("remove an array value") {
@@ -157,15 +156,15 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("remove an array value with dynamicMemberLookup") {
-                self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test", defaultValue: [self.defaultValue])
-                defaults.testOptionalArray = [self.customValue]
+                then("remove an array value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test", defaultValue: [self.defaultValue])
+                    defaults.testOptionalArray = [self.customValue]
 
-                defaults.remove(\.testOptionalArray)
+                    defaults.remove(\.testOptionalArray)
 
-                expect(defaults.hasKey(\.testOptionalArray)) == false
-                expect(defaults.testOptionalArray) == [self.defaultValue]
-            }
+                    expect(defaults.hasKey(\.testOptionalArray)) == false
+                    expect(defaults.testOptionalArray) == [self.defaultValue]
+                }
             #endif
         }
     }
@@ -200,11 +199,11 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("get a default value with dynamicMemberLookup") {
-                self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+                then("get a default value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
 
-                expect(defaults.testOptionalValue) == self.defaultValue
-            }
+                    expect(defaults.testOptionalValue) == self.defaultValue
+                }
             #endif
 
             then("get a default array value") {
@@ -214,11 +213,11 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("get a default array value with dynamicMemberLookup") {
-                self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test", defaultValue: [self.defaultValue])
+                then("get a default array value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test", defaultValue: [self.defaultValue])
 
-                expect(defaults.testOptionalArray) == [self.defaultValue]
-            }
+                    expect(defaults.testOptionalArray) == [self.defaultValue]
+                }
             #endif
 
             then("save a value") {
@@ -230,13 +229,13 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("save a value with dynamicMemberLookup") {
-                self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-                let expectedValue = self.customValue
-                defaults.testOptionalValue = expectedValue
+                then("save a value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+                    let expectedValue = self.customValue
+                    defaults.testOptionalValue = expectedValue
 
-                expect(defaults.testOptionalValue) == expectedValue
-            }
+                    expect(defaults.testOptionalValue) == expectedValue
+                }
             #endif
 
             then("save an array value") {
@@ -248,13 +247,13 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("save an array value with dynamicMemberLookup") {
-                self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test", defaultValue: [self.defaultValue])
-                let expectedValue = [self.customValue]
-                defaults.testOptionalArray = expectedValue
+                then("save an array value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test", defaultValue: [self.defaultValue])
+                    let expectedValue = [self.customValue]
+                    defaults.testOptionalArray = expectedValue
 
-                expect(defaults.testOptionalArray) == expectedValue
-            }
+                    expect(defaults.testOptionalArray) == expectedValue
+                }
             #endif
 
             then("remove a value") {
@@ -266,13 +265,13 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("remove a value with dynamicMemberLookup") {
-                self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+                then("remove a value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
 
-                defaults.testOptionalValue = nil
+                    defaults.testOptionalValue = nil
 
-                expect(defaults.testOptionalValue) == self.defaultValue
-            }
+                    expect(defaults.testOptionalValue) == self.defaultValue
+                }
             #endif
 
             then("remove an array value") {
@@ -284,13 +283,13 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("remove an array value with dynamicMemberLookup") {
-                self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test", defaultValue: [self.defaultValue])
+                then("remove an array value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test", defaultValue: [self.defaultValue])
 
-                defaults.testOptionalArray = nil
+                    defaults.testOptionalArray = nil
 
-                expect(defaults.testOptionalArray) == [self.defaultValue]
-            }
+                    expect(defaults.testOptionalArray) == [self.defaultValue]
+                }
             #endif
         }
     }
@@ -327,13 +326,13 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("save a value with dynamicMemberLookup") {
-                self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
-                let expectedValue = self.customValue
-                defaults.testOptionalValue = expectedValue
+                then("save a value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
+                    let expectedValue = self.customValue
+                    defaults.testOptionalValue = expectedValue
 
-                expect(defaults.testOptionalValue) == expectedValue
-            }
+                    expect(defaults.testOptionalValue) == expectedValue
+                }
             #endif
 
             then("save an array value") {
@@ -345,13 +344,13 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("save an array value with dynamicMemberLookup") {
-                self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test")
-                let expectedValue = [self.customValue]
-                defaults.testOptionalArray = expectedValue
+                then("save an array value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test")
+                    let expectedValue = [self.customValue]
+                    defaults.testOptionalArray = expectedValue
 
-                expect(defaults.testOptionalArray) == expectedValue
-            }
+                    expect(defaults.testOptionalArray) == expectedValue
+                }
             #endif
 
             then("remove a value") {
@@ -365,15 +364,15 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("remove a value with dynamicMemberLookup") {
-                self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
+                then("remove a value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
 
-                defaults.testOptionalValue = self.defaultValue
-                expect(defaults.testOptionalValue) == self.defaultValue
+                    defaults.testOptionalValue = self.defaultValue
+                    expect(defaults.testOptionalValue) == self.defaultValue
 
-                defaults.testOptionalValue = nil
-                expect(defaults.testOptionalValue).to(beNil())
-            }
+                    defaults.testOptionalValue = nil
+                    expect(defaults.testOptionalValue).to(beNil())
+                }
             #endif
 
             then("remove an array value") {
@@ -387,15 +386,15 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("remove an array with dynamicMemberLookup") {
-                self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test")
+                then("remove an array with dynamicMemberLookup") {
+                    self.keyStore.testOptionalArray = DefaultsKey<[Serializable]?>("test")
 
-                defaults.testOptionalArray = [self.defaultValue]
-                expect(defaults.testOptionalArray) == [self.defaultValue]
+                    defaults.testOptionalArray = [self.defaultValue]
+                    expect(defaults.testOptionalArray) == [self.defaultValue]
 
-                defaults.testOptionalArray = nil
-                expect(defaults.testOptionalArray).to(beNil())
-            }
+                    defaults.testOptionalArray = nil
+                    expect(defaults.testOptionalArray).to(beNil())
+                }
             #endif
 
             then("compare optional value to non-optional value") {
@@ -405,11 +404,11 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
             }
 
             #if swift(>=5.1)
-            then("compare optional value to non-optional value with dynamicMemberLookup") {
-                self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
-                expect(defaults.testOptionalValue == nil).to(beTrue())
-                expect(defaults.testOptionalValue != self.defaultValue).to(beTrue())
-            }
+                then("compare optional value to non-optional value with dynamicMemberLookup") {
+                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
+                    expect(defaults.testOptionalValue == nil).to(beTrue())
+                    expect(defaults.testOptionalValue != self.defaultValue).to(beTrue())
+                }
             #endif
         }
     }
@@ -474,11 +473,11 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
 
         func injectPlistArguments(to userDefaults: UserDefaults) {
             let arguments = transformToProperKeyValue()
-                .reduce(into: [String]()) { (result, element) in
+                .reduce(into: [String]()) { result, element in
                     let (key, value) = element
                     let (stringValue, _) = value
                     result.append(contentsOf: ["-" + key, stringValue])
-            }
+                }
             let parsedArguments = UserDefaults._parseArguments(arguments)
 
             userDefaults.setVolatileDomain(parsedArguments, forName: "NSArgumentDomain")
@@ -488,549 +487,555 @@ extension DefaultsSerializableSpec where Serializable.T: Equatable, Serializable
         // this function transforms it to a [defaultsKey: (stringValue, expectedParsedValue)]
         func transformToProperKeyValue() -> [String: (String, Serializable?)] {
             return enumeratedArguments
-                .reduce(into: [String: (String, Serializable?)]()) { (result, enumeratedElement) in
+                .reduce(into: [String: (String, Serializable?)]()) { result, enumeratedElement in
                     let (index, element) = enumeratedElement
                     let (value, expectedParsedValue) = element
                     let argumentKey = "\(keyPrefix)\(index)"
                     result[argumentKey] = (value, expectedParsedValue)
-            }
+                }
         }
     }
 
     func testObserving() {
         #if !os(Linux)
-        given("key-value observing") {
-            var defaults: DefaultsAdapter<FrogKeyStore<Serializable>>!
-            var observer: DefaultsDisposable?
+            given("key-value observing") {
+                var defaults: DefaultsAdapter<FrogKeyStore<Serializable>>!
+                var observer: DefaultsDisposable?
 
-            beforeEach {
-                let suiteName = UUID().uuidString
-                let userDefaults = UserDefaults(suiteName: suiteName)!
-                defaults = DefaultsAdapter(defaults: userDefaults,
-                                           keyStore: self.keyStore)
-            }
-
-            afterEach {
-                observer?.dispose()
-            }
-
-            when("optional key without default value") {
-                then("receive updates") {
-                    let key = DefaultsKey<Serializable?>("test")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    defaults[key: key] = self.customValue
-
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
+                beforeEach {
+                    let suiteName = UUID().uuidString
+                    let userDefaults = UserDefaults(suiteName: suiteName)!
+                    defaults = DefaultsAdapter(defaults: userDefaults,
+                                               keyStore: self.keyStore)
                 }
 
-                #if swift(>=5.1)
-                then("receive updates with dynamicMemberLookup") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    defaults.testOptionalValue = self.customValue
-
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-                #endif
-
-                then("receives initial update being nil") {
-                    let key = DefaultsKey<Serializable?>("test1")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(beNil())
+                afterEach {
+                    observer?.dispose()
                 }
 
-                then("receives initial update being non-nil") {
-                    let key = DefaultsKey<Serializable?>("test1")
-                    defaults[key: key] = self.customValue
+                when("optional key without default value") {
+                    then("receive updates") {
+                        let key = DefaultsKey<Serializable?>("test")
 
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
 
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-
-                then("receives initial update being nil with keyPaths") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test2")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(\.testOptionalValue, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(beNil())
-                }
-
-                then("receives initial update being non-nil with keyPaths") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test2")
-                    defaults[\.testOptionalValue] = self.customValue
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(\.testOptionalValue, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-
-                then("receives nil update") {
-                    let key = DefaultsKey<Serializable?>("test")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-                    defaults[key: key] = self.defaultValue
-                    defaults[key: key] = nil
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(beNil())
-                }
-
-                #if swift(>=5.1)
-                then("receives nil update with dynamicMemberLookup") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-                    defaults.testOptionalValue = self.defaultValue
-                    defaults.testOptionalValue = nil
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(beNil())
-                }
-                #endif
-                
-                then("reference itself in the update closure without crash") {
-                    let key = DefaultsKey<Serializable?>("test")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    var newValueReferencedDirectly: Serializable?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                        newValueReferencedDirectly = defaults[key: key]
-                    }
-                    defaults[key: key] = self.customValue
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                    expect(update?.newValue).toEventually(equal(newValueReferencedDirectly))
-                }
-                
-                then("reference itself in the update closure on custom queue without crash") {
-                    let key = DefaultsKey<Serializable?>("test")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    var newValueReferencedDirectly: Serializable?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                        newValueReferencedDirectly = defaults[key: key]
-                    }
-
-                    DispatchQueue.global(qos: .utility).async {
                         defaults[key: key] = self.customValue
+
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
                     }
 
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                    expect(update?.newValue).toEventually(equal(newValueReferencedDirectly))
-                }
+                    #if swift(>=5.1)
+                        then("receive updates with dynamicMemberLookup") {
+                            self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
 
-                then("remove observer on dispose") {
-                    let key = DefaultsKey<Serializable?>("test")
+                            let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                            observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
+                                update.value = receivedUpdate
+                            }
 
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    let observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
+                            defaults.testOptionalValue = self.customValue
+
+                            expect(update.value?.oldValue).toEventually(beNil())
+                            expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        }
+                    #endif
+
+                    then("receives initial update being nil") {
+                        let key = DefaultsKey<Serializable?>("test1")
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(beNil())
                     }
 
-                    observer.dispose()
-                    defaults[key: key] = self.customValue
-
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(beNil())
-                }
-
-                #if swift(>=5.1)
-                then("remove observer on dispose with dynamicMemberLookup") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    let observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    observer.dispose()
-                    defaults.testOptionalValue = self.customValue
-
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(beNil())
-                }
-                #endif
-            }
-
-            when("optional key with default value") {
-                then("receive updates") {
-                    let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    defaults[key: key] = self.customValue
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-
-                #if swift(>=5.1)
-                then("receive updates with dynamicMemberLookup") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    defaults.testOptionalValue = self.customValue
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-                #endif
-
-                then("receives initial update being default value") {
-                    let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.defaultValue))
-                }
-
-                then("receives initial update being custom value") {
-                    let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-                    defaults[key: key] = self.customValue
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-
-                then("receives initial update being default value with keyPaths") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(\.testOptionalValue, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.defaultValue))
-                }
-
-                then("receives initial update being custom value with keyPaths") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-                    defaults[\.testOptionalValue] = self.customValue
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(\.testOptionalValue, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-
-                then("receives nil update") {
-                    let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-                    defaults[key: key] = self.defaultValue
-                    defaults[key: key] = nil
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.defaultValue))
-                }
-
-                #if swift(>=5.1)
-                then("receives nil update with dynamicMemberLookup") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-                    defaults.testOptionalValue = self.customValue
-                    defaults.testOptionalValue = nil
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.oldValue).toEventually(equal(self.customValue))
-                    expect(update?.newValue).toEventually(equal(self.defaultValue))
-                }
-                #endif
-                
-                then("reference itself in the update closure without crash") {
-                    let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    var newValueReferencedDirectly: Serializable?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                        newValueReferencedDirectly = defaults[key: key]
-                    }
-                    defaults[key: key] = self.customValue
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                    expect(update?.newValue).toEventually(equal(newValueReferencedDirectly))
-                }
-                
-                then("reference itself in the update closure on custom queue without crash") {
-                    let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    var newValueReferencedDirectly: Serializable?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                        newValueReferencedDirectly = defaults[key: key]
-                    }
-
-                    DispatchQueue.global(qos: .utility).async {
+                    then("receives initial update being non-nil") {
+                        let key = DefaultsKey<Serializable?>("test1")
                         defaults[key: key] = self.customValue
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
                     }
 
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                    expect(update?.newValue).toEventually(equal(newValueReferencedDirectly))
-                }
+                    then("receives initial update being nil with keyPaths") {
+                        self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test2")
 
-                then("remove observer on dispose") {
-                    let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(\.testOptionalValue, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
 
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    let observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(beNil())
                     }
 
-                    observer.dispose()
-                    defaults[key: key] = self.customValue
+                    then("receives initial update being non-nil with keyPaths") {
+                        self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test2")
+                        defaults[\.testOptionalValue] = self.customValue
 
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(beNil())
-                }
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(\.testOptionalValue, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
 
-                #if swift(>=5.1)
-                then("remove observer on dispose with dynamicMemberLookup") {
-                    self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable?>.Update?
-                    let observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
-                        update = receivedUpdate
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
                     }
 
-                    observer.dispose()
-                    defaults.testOptionalValue = self.customValue
+                    then("receives nil update") {
+                        let key = DefaultsKey<Serializable?>("test")
 
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(beNil())
-                }
-                #endif
-            }
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+                        defaults[key: key] = self.defaultValue
+                        defaults[key: key] = nil
 
-            when("non-optional key") {
-                then("receive updates") {
-                    let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable>.Update?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(beNil())
                     }
 
-                    defaults[key: key] = self.customValue
+                    #if swift(>=5.1)
+                        then("receives nil update with dynamicMemberLookup") {
+                            self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
 
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
+                            let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                            observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
+                                update.value = receivedUpdate
+                            }
+                            defaults.testOptionalValue = self.defaultValue
+                            defaults.testOptionalValue = nil
 
-                #if swift(>=5.1)
-                then("receive updates with dynamicMemberLookup") {
-                    self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+                            expect(update.value).toEventuallyNot(beNil())
+                            expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                            expect(update.value?.newValue).toEventually(beNil())
+                        }
+                    #endif
 
-                    var update: DefaultsObserver<Serializable>.Update?
-                    observer = defaults.observe(\.testValue) { receivedUpdate in
-                        update = receivedUpdate
-                    }
+                    then("reference itself in the update closure without crash") {
+                        let key = DefaultsKey<Serializable?>("test")
 
-                    defaults.testValue = self.customValue
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-                #endif
-
-                then("receives initial update being default value") {
-                    let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable>.Update?
-                    observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.defaultValue))
-                }
-
-                then("receives initial update being custom value") {
-                    let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-                    defaults[key: key] = self.customValue
-
-                    var update: DefaultsObserver<Serializable>.Update?
-                    observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-
-                then("receives initial update being default value with keyPaths") {
-                    self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable>.Update?
-                    observer = defaults.observe(\.testValue, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.defaultValue))
-                }
-
-                then("receives initial update being custom value with keyPaths") {
-                    self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-                    defaults[\.testValue] = self.customValue
-
-                    var update: DefaultsObserver<Serializable>.Update?
-                    observer = defaults.observe(\.testValue, options: [.initial, .old, .new]) { receivedUpdate in
-                        update = receivedUpdate
-                    }
-
-                    expect(update?.oldValue).toEventually(equal(self.defaultValue))
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                }
-                
-                then("reference itself in the update closure without crash") {
-                    let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable>.Update?
-                    var newValueReferencedDirectly: Serializable?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                        newValueReferencedDirectly = defaults[key: key]
-                    }
-                    defaults[key: key] = self.customValue
-
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                    expect(update?.newValue).toEventually(equal(newValueReferencedDirectly))
-                }
-                
-                then("reference itself in the update closure on custom queue without crash") {
-                    let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
-
-                    var update: DefaultsObserver<Serializable>.Update?
-                    var newValueReferencedDirectly: Serializable?
-                    observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
-                        newValueReferencedDirectly = defaults[key: key]
-                    }
-
-                    DispatchQueue.global(qos: .utility).async {
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        let newValueReferencedDirectly = Locked<Serializable?>(nil)
+                        let capturedDefaults = defaults
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                            newValueReferencedDirectly.value = capturedDefaults?[key: key]
+                        }
                         defaults[key: key] = self.customValue
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        expect(update.value?.newValue).toEventually(equal(newValueReferencedDirectly.value))
                     }
 
-                    expect(update).toEventuallyNot(beNil())
-                    expect(update?.newValue).toEventually(equal(self.customValue))
-                    expect(update?.newValue).toEventually(equal(newValueReferencedDirectly))
-                }
+                    then("reference itself in the update closure on custom queue without crash") {
+                        let key = DefaultsKey<Serializable?>("test")
 
-                then("remove observer on dispose") {
-                    let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        let newValueReferencedDirectly = Locked<Serializable?>(nil)
+                        let capturedDefaults = defaults
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                            newValueReferencedDirectly.value = capturedDefaults?[key: key]
+                        }
 
-                    var update: DefaultsObserver<Serializable>.Update?
-                    let observer = defaults.observe(key) { receivedUpdate in
-                        update = receivedUpdate
+                        DispatchQueue.global(qos: .utility).async {
+                            defaults[key: key] = self.customValue
+                        }
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        expect(update.value?.newValue).toEventually(equal(newValueReferencedDirectly.value))
                     }
 
-                    observer.dispose()
-                    defaults[key: key] = self.customValue
+                    then("remove observer on dispose") {
+                        let key = DefaultsKey<Serializable?>("test")
 
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(beNil())
-                }
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        let observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
 
-                #if swift(>=5.1)
-                then("remove observer on dispose with dynamicMemberLookup") {
-                    self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+                        observer.dispose()
+                        defaults[key: key] = self.customValue
 
-                    var update: DefaultsObserver<Serializable>.Update?
-                    let observer = defaults.observe(\.testValue) { receivedUpdate in
-                        update = receivedUpdate
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(beNil())
                     }
 
-                    observer.dispose()
-                    defaults.testValue = self.customValue
+                    #if swift(>=5.1)
+                        then("remove observer on dispose with dynamicMemberLookup") {
+                            self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test")
 
-                    expect(update?.oldValue).toEventually(beNil())
-                    expect(update?.newValue).toEventually(beNil())
+                            let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                            let observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
+                                update.value = receivedUpdate
+                            }
+
+                            observer.dispose()
+                            defaults.testOptionalValue = self.customValue
+
+                            expect(update.value?.oldValue).toEventually(beNil())
+                            expect(update.value?.newValue).toEventually(beNil())
+                        }
+                    #endif
                 }
-                #endif
+
+                when("optional key with default value") {
+                    then("receive updates") {
+                        let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        defaults[key: key] = self.customValue
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                    }
+
+                    #if swift(>=5.1)
+                        then("receive updates with dynamicMemberLookup") {
+                            self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                            let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                            observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
+                                update.value = receivedUpdate
+                            }
+
+                            defaults.testOptionalValue = self.customValue
+
+                            expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                            expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        }
+                    #endif
+
+                    then("receives initial update being default value") {
+                        let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.defaultValue))
+                    }
+
+                    then("receives initial update being custom value") {
+                        let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+                        defaults[key: key] = self.customValue
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                    }
+
+                    then("receives initial update being default value with keyPaths") {
+                        self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(\.testOptionalValue, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.defaultValue))
+                    }
+
+                    then("receives initial update being custom value with keyPaths") {
+                        self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+                        defaults[\.testOptionalValue] = self.customValue
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(\.testOptionalValue, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                    }
+
+                    then("receives nil update") {
+                        let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+                        defaults[key: key] = self.defaultValue
+                        defaults[key: key] = nil
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.defaultValue))
+                    }
+
+                    #if swift(>=5.1)
+                        then("receives nil update with dynamicMemberLookup") {
+                            self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                            let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                            observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
+                                update.value = receivedUpdate
+                            }
+                            defaults.testOptionalValue = self.customValue
+                            defaults.testOptionalValue = nil
+
+                            expect(update.value).toEventuallyNot(beNil())
+                            expect(update.value?.oldValue).toEventually(equal(self.customValue))
+                            expect(update.value?.newValue).toEventually(equal(self.defaultValue))
+                        }
+                    #endif
+
+                    then("reference itself in the update closure without crash") {
+                        let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        let newValueReferencedDirectly = Locked<Serializable?>(nil)
+                        let capturedDefaults = defaults
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                            newValueReferencedDirectly.value = capturedDefaults?[key: key]
+                        }
+                        defaults[key: key] = self.customValue
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        expect(update.value?.newValue).toEventually(equal(newValueReferencedDirectly.value))
+                    }
+
+                    then("reference itself in the update closure on custom queue without crash") {
+                        let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        let newValueReferencedDirectly = Locked<Serializable?>(nil)
+                        let capturedDefaults = defaults
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                            newValueReferencedDirectly.value = capturedDefaults?[key: key]
+                        }
+
+                        DispatchQueue.global(qos: .utility).async {
+                            defaults[key: key] = self.customValue
+                        }
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        expect(update.value?.newValue).toEventually(equal(newValueReferencedDirectly.value))
+                    }
+
+                    then("remove observer on dispose") {
+                        let key = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                        let observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        observer.dispose()
+                        defaults[key: key] = self.customValue
+
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(beNil())
+                    }
+
+                    #if swift(>=5.1)
+                        then("remove observer on dispose with dynamicMemberLookup") {
+                            self.keyStore.testOptionalValue = DefaultsKey<Serializable?>("test", defaultValue: self.defaultValue)
+
+                            let update = Locked<DefaultsObserver<Serializable?>.Update?>(nil)
+                            let observer = defaults.observe(\.testOptionalValue) { receivedUpdate in
+                                update.value = receivedUpdate
+                            }
+
+                            observer.dispose()
+                            defaults.testOptionalValue = self.customValue
+
+                            expect(update.value?.oldValue).toEventually(beNil())
+                            expect(update.value?.newValue).toEventually(beNil())
+                        }
+                    #endif
+                }
+
+                when("non-optional key") {
+                    then("receive updates") {
+                        let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        defaults[key: key] = self.customValue
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                    }
+
+                    #if swift(>=5.1)
+                        then("receive updates with dynamicMemberLookup") {
+                            self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+
+                            let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                            observer = defaults.observe(\.testValue) { receivedUpdate in
+                                update.value = receivedUpdate
+                            }
+
+                            defaults.testValue = self.customValue
+
+                            expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                            expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        }
+                    #endif
+
+                    then("receives initial update being default value") {
+                        let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                        observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.defaultValue))
+                    }
+
+                    then("receives initial update being custom value") {
+                        let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+                        defaults[key: key] = self.customValue
+
+                        let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                        observer = defaults.observe(key, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                    }
+
+                    then("receives initial update being default value with keyPaths") {
+                        self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                        observer = defaults.observe(\.testValue, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.defaultValue))
+                    }
+
+                    then("receives initial update being custom value with keyPaths") {
+                        self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+                        defaults[\.testValue] = self.customValue
+
+                        let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                        observer = defaults.observe(\.testValue, options: [.initial, .old, .new]) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        expect(update.value?.oldValue).toEventually(equal(self.defaultValue))
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                    }
+
+                    then("reference itself in the update closure without crash") {
+                        let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                        let newValueReferencedDirectly = Locked<Serializable?>(nil)
+                        let capturedDefaults = defaults
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                            newValueReferencedDirectly.value = capturedDefaults?[key: key]
+                        }
+                        defaults[key: key] = self.customValue
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        expect(update.value?.newValue).toEventually(equal(newValueReferencedDirectly.value))
+                    }
+
+                    then("reference itself in the update closure on custom queue without crash") {
+                        let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                        let newValueReferencedDirectly = Locked<Serializable?>(nil)
+                        let capturedDefaults = defaults
+                        observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                            newValueReferencedDirectly.value = capturedDefaults?[key: key]
+                        }
+
+                        DispatchQueue.global(qos: .utility).async {
+                            defaults[key: key] = self.customValue
+                        }
+
+                        expect(update.value).toEventuallyNot(beNil())
+                        expect(update.value?.newValue).toEventually(equal(self.customValue))
+                        expect(update.value?.newValue).toEventually(equal(newValueReferencedDirectly.value))
+                    }
+
+                    then("remove observer on dispose") {
+                        let key = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+
+                        let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                        let observer = defaults.observe(key) { receivedUpdate in
+                            update.value = receivedUpdate
+                        }
+
+                        observer.dispose()
+                        defaults[key: key] = self.customValue
+
+                        expect(update.value?.oldValue).toEventually(beNil())
+                        expect(update.value?.newValue).toEventually(beNil())
+                    }
+
+                    #if swift(>=5.1)
+                        then("remove observer on dispose with dynamicMemberLookup") {
+                            self.keyStore.testValue = DefaultsKey<Serializable>("test", defaultValue: self.defaultValue)
+
+                            let update = Locked<DefaultsObserver<Serializable>.Update?>(nil)
+                            let observer = defaults.observe(\.testValue) { receivedUpdate in
+                                update.value = receivedUpdate
+                            }
+
+                            observer.dispose()
+                            defaults.testValue = self.customValue
+
+                            expect(update.value?.oldValue).toEventually(beNil())
+                            expect(update.value?.newValue).toEventually(beNil())
+                        }
+                    #endif
+                }
             }
-        }
         #endif
     }
 }

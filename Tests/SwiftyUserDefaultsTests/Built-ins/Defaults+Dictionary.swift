@@ -22,15 +22,14 @@
 // SOFTWARE.
 //
 
-import Quick
 import Foundation
+import Quick
 
 final class DefaultsDictionarySpec: QuickSpec, DefaultsSerializableSpec {
+    typealias Serializable = [String: String]
 
-    typealias Serializable = [String: AnyHashable]
-
-    var customValue: [String: AnyHashable] = ["a": "b"]
-    var defaultValue: [String: AnyHashable] = ["c": "d", "e": 1]
+    var customValue: [String: String] = ["a": "b"]
+    var defaultValue: [String: String] = ["c": "d", "e": "1"]
     var keyStore = FrogKeyStore<Serializable>()
 
     override func spec() {
