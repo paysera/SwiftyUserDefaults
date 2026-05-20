@@ -56,7 +56,7 @@ import Foundation
     /// same thread and re-enters the lock to update the cache. A non-recursive
     /// lock would deadlock in that re-entry path.
     @propertyWrapper
-    public final class SwiftyUserDefault<T: DefaultsSerializable>: @unchecked Sendable where T.T == T {
+    public final class SwiftyUserDefault<T: DefaultsSerializable>: @unchecked Sendable where T.T == T, T: Sendable {
         public let key: DefaultsKey<T>
         public let options: SwiftyUserDefaultOptions
 

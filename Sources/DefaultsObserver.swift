@@ -38,7 +38,7 @@ public protocol DefaultsDisposable: Sendable {
     /// Note: the handler is invoked on whichever thread `UserDefaults` posts the
     /// KVO notification on (typically the writer's thread). Hop to your own
     /// actor or queue inside the handler if you need a specific isolation.
-    public final class DefaultsObserver<T: DefaultsSerializable>: NSObject, DefaultsDisposable, @unchecked Sendable where T == T.T {
+    public final class DefaultsObserver<T: DefaultsSerializable>: NSObject, DefaultsDisposable, @unchecked Sendable where T == T.T, T: Sendable {
         public struct Update {
             public let kind: NSKeyValueChange
             public let indexes: IndexSet?
@@ -117,6 +117,6 @@ public protocol DefaultsDisposable: Sendable {
         }
     }
 
-    extension DefaultsObserver.Update: Sendable where T.T: Sendable {}
+    extension DefaultsObserver.Update: Sendable {}
 
 #endif

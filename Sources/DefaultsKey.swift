@@ -29,10 +29,12 @@ import Foundation
 /// Specialize with value type
 /// and pass key name to the initializer to create a key.
 ///
-/// All stored properties are `let`, so the struct is `Sendable` whenever the
-/// associated `ValueType.T` resolves to a `Sendable` value. This is expressed
-/// via conditional conformance below.
-public struct DefaultsKey<ValueType: DefaultsSerializable> {
+/// Constrained to `ValueType.T: Sendable` so a key is always safe to carry
+/// across actor boundaries. Types that can be stored in `UserDefaults`
+/// (plist primitives, `Codable` values, `RawRepresentable` values) are
+/// already `Sendable` in practice; this constraint makes that contract
+/// explicit at the type level.
+public struct DefaultsKey<ValueType: DefaultsSerializable> where ValueType.T: Sendable {
     public let _key: String
     public let defaultValue: ValueType.T?
     let isOptional: Bool
@@ -69,4 +71,4 @@ public extension DefaultsKey where ValueType: DefaultsSerializable, ValueType: O
     }
 }
 
-extension DefaultsKey: Sendable where ValueType.T: Sendable {}
+extension DefaultsKey: Sendable {}
