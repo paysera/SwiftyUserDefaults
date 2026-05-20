@@ -24,15 +24,14 @@
 
 import Foundation
 
-/// Tiny helper that lets a non-`Sendable` value cross isolation boundaries
-/// under explicit programmer responsibility. Used at the single boundary where
-/// the library has to hold a `UserDefaults` instance, which Apple documents as
-/// thread-safe but does not mark `Sendable`.
-@frozen
-public struct UncheckedSendable<Value>: @unchecked Sendable {
-    public let wrappedValue: Value
+/// Library-internal helper that lets a non-`Sendable` value cross isolation
+/// boundaries under explicit programmer responsibility. Used at the single
+/// boundary where the library has to hold a `UserDefaults` instance, which
+/// Apple documents as thread-safe but does not mark `Sendable`.
+struct UncheckedSendable<Value>: @unchecked Sendable {
+    let wrappedValue: Value
 
-    public init(_ wrappedValue: Value) {
+    init(_ wrappedValue: Value) {
         self.wrappedValue = wrappedValue
     }
 }

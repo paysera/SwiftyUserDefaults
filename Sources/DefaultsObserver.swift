@@ -34,6 +34,10 @@ public protocol DefaultsDisposable: Sendable {
     /// because it stores `didRemoveObserver` mutable state guarded by `lock` and
     /// dispatches the user-provided `handler` on whichever thread KVO fires it on.
     /// The handler closure is `@Sendable` so it can cross isolation boundaries.
+    ///
+    /// Note: the handler is invoked on whichever thread `UserDefaults` posts the
+    /// KVO notification on (typically the writer's thread). Hop to your own
+    /// actor or queue inside the handler if you need a specific isolation.
     public final class DefaultsObserver<T: DefaultsSerializable>: NSObject, DefaultsDisposable, @unchecked Sendable where T == T.T {
         public struct Update {
             public let kind: NSKeyValueChange
@@ -101,16 +105,18 @@ public protocol DefaultsDisposable: Sendable {
         public func dispose() {
             // We use this local property because when you use `removeObserver` when you are
             // not actually observing anymore, you'll receive a runtime error.
+            //
+            // The lock covers the `removeObserver` call too so that a deinit-triggered
+            // `dispose()` racing with an explicit `dispose()` cannot both reach
+            // `removeObserver`.
             lock.lock()
-            if didRemoveObserver {
-                lock.unlock()
-                return
-            }
+            defer { lock.unlock() }
+            guard !didRemoveObserver else { return }
             didRemoveObserver = true
-            lock.unlock()
-
             userDefaults.removeObserver(self, forKeyPath: key._key, context: nil)
         }
     }
+
+    extension DefaultsObserver.Update: Sendable where T.T: Sendable {}
 
 #endif

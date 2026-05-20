@@ -29,11 +29,10 @@ import Foundation
 /// Specialize with value type
 /// and pass key name to the initializer to create a key.
 ///
-/// Marked `@unchecked Sendable` because `ValueType.T` is an unconstrained
-/// associated type that could resolve to a non-`Sendable` value. The stored
-/// fields (`_key`, `defaultValue`, `isOptional`) are themselves immutable or
-/// trivially `Sendable`, so the cost is the boundary annotation only.
-public struct DefaultsKey<ValueType: DefaultsSerializable>: @unchecked Sendable {
+/// All stored properties are `let`, so the struct is `Sendable` whenever the
+/// associated `ValueType.T` resolves to a `Sendable` value. This is expressed
+/// via conditional conformance below.
+public struct DefaultsKey<ValueType: DefaultsSerializable> {
     public let _key: String
     public let defaultValue: ValueType.T?
     let isOptional: Bool
@@ -69,3 +68,5 @@ public extension DefaultsKey where ValueType: DefaultsSerializable, ValueType: O
         isOptional = true
     }
 }
+
+extension DefaultsKey: Sendable where ValueType.T: Sendable {}

@@ -24,20 +24,19 @@
 
 import Foundation
 
-/// Global shortcut for `UserDefaults.standard`
+// swiftlint:disable identifier_name prefixed_toplevel_constant
+/// Global shortcut for `UserDefaults.standard`.
 ///
 /// **Pro-Tip:** If you want to use shared user defaults, just
-///  redefine this global shortcut in your app target, like so:
-///  ~~~
-///  var Defaults = DefaultsAdapter(defaults: UserDefaults(suiteName: "com.my.app")!, keyStore: DefaultsKeys())
-///  ~~~
-
-// swiftlint:disable identifier_name prefixed_toplevel_constant
-/// Mutable global so callers can swap in their own `UserDefaults(suiteName:)`
-/// at app startup. `nonisolated(unsafe)` makes the mutation explicit under
-/// Swift 6 strict concurrency; the value type (`DefaultsAdapter`) is itself
-/// `Sendable`, so the only risk is the initial assignment race, which has
-/// always been the caller's responsibility to do at startup before any reads.
+/// redefine this global shortcut in your app target, like so:
+/// ~~~
+/// var Defaults = DefaultsAdapter(defaults: UserDefaults(suiteName: "com.my.app")!, keyStore: DefaultsKeys())
+/// ~~~
+///
+/// `nonisolated(unsafe)` makes the mutation explicit under Swift 6 strict
+/// concurrency. The value type (`DefaultsAdapter`) is itself `Sendable`, so
+/// the only risk is the initial assignment race, which has always been the
+/// caller's responsibility to do at startup before any reads.
 public nonisolated(unsafe) var Defaults = DefaultsAdapter<DefaultsKeys>(defaults: .standard, keyStore: .init())
 // swiftlint:enable identifier_name prefixed_toplevel_constant
 

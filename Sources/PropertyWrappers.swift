@@ -26,7 +26,15 @@ import Foundation
 
 #if swift(>=5.1)
     public struct SwiftyUserDefaultOptions: OptionSet, Sendable {
+        /// Cache the value in memory after the first read.
+        ///
+        /// Pair with `.observed` so that external writes (other code paths, app
+        /// extensions writing through the same suite, or another process) keep
+        /// the in-memory cache consistent with `UserDefaults`. Using `.cached`
+        /// alone leaves the cache stale after any out-of-band write.
         public static let cached = SwiftyUserDefaultOptions(rawValue: 1 << 0)
+
+        /// Observe `UserDefaults` for changes and update the cached value.
         public static let observed = SwiftyUserDefaultOptions(rawValue: 1 << 2)
 
         public let rawValue: Int

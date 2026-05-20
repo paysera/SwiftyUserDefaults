@@ -47,7 +47,7 @@ public protocol DefaultsBridge: Sendable {
     func deserialize(_ object: Any) -> T?
 }
 
-public struct DefaultsObjectBridge<T>: DefaultsBridge, @unchecked Sendable {
+public struct DefaultsObjectBridge<T>: DefaultsBridge {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -63,7 +63,9 @@ public struct DefaultsObjectBridge<T>: DefaultsBridge, @unchecked Sendable {
     }
 }
 
-public struct DefaultsArrayBridge<T: Collection>: DefaultsBridge, @unchecked Sendable {
+extension DefaultsObjectBridge: Sendable where T: Sendable {}
+
+public struct DefaultsArrayBridge<T: Collection>: DefaultsBridge {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -78,6 +80,8 @@ public struct DefaultsArrayBridge<T: Collection>: DefaultsBridge, @unchecked Sen
         return nil
     }
 }
+
+extension DefaultsArrayBridge: Sendable where T: Sendable {}
 
 public struct DefaultsStringBridge: DefaultsBridge, Sendable {
     public init() {}
@@ -220,7 +224,7 @@ public struct DefaultsUrlBridge: DefaultsBridge, Sendable {
     }
 }
 
-public struct DefaultsCodableBridge<T: Codable>: DefaultsBridge, @unchecked Sendable {
+public struct DefaultsCodableBridge<T: Codable>: DefaultsBridge {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -245,7 +249,9 @@ public struct DefaultsCodableBridge<T: Codable>: DefaultsBridge, @unchecked Send
     }
 }
 
-public struct DefaultsKeyedArchiverBridge<T>: DefaultsBridge, @unchecked Sendable {
+extension DefaultsCodableBridge: Sendable where T: Sendable {}
+
+public struct DefaultsKeyedArchiverBridge<T>: DefaultsBridge {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -274,7 +280,9 @@ public struct DefaultsKeyedArchiverBridge<T>: DefaultsBridge, @unchecked Sendabl
     }
 }
 
-public struct DefaultsRawRepresentableBridge<T: RawRepresentable>: DefaultsBridge, @unchecked Sendable {
+extension DefaultsKeyedArchiverBridge: Sendable where T: Sendable {}
+
+public struct DefaultsRawRepresentableBridge<T: RawRepresentable>: DefaultsBridge {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -292,7 +300,9 @@ public struct DefaultsRawRepresentableBridge<T: RawRepresentable>: DefaultsBridg
     }
 }
 
-public struct DefaultsRawRepresentableArrayBridge<T: Collection>: DefaultsBridge, @unchecked Sendable where T.Element: RawRepresentable {
+extension DefaultsRawRepresentableBridge: Sendable where T: Sendable {}
+
+public struct DefaultsRawRepresentableArrayBridge<T: Collection>: DefaultsBridge where T.Element: RawRepresentable {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -311,7 +321,9 @@ public struct DefaultsRawRepresentableArrayBridge<T: Collection>: DefaultsBridge
     }
 }
 
-public struct DefaultsOptionalBridge<Bridge: DefaultsBridge>: DefaultsBridge, @unchecked Sendable {
+extension DefaultsRawRepresentableArrayBridge: Sendable where T: Sendable {}
+
+public struct DefaultsOptionalBridge<Bridge: DefaultsBridge>: DefaultsBridge {
     public typealias T = Bridge.T?
 
     private let bridge: Bridge
@@ -333,7 +345,9 @@ public struct DefaultsOptionalBridge<Bridge: DefaultsBridge>: DefaultsBridge, @u
     }
 }
 
-public struct DefaultsOptionalArrayBridge<Bridge: DefaultsBridge>: DefaultsBridge, @unchecked Sendable where Bridge.T: Collection {
+extension DefaultsOptionalBridge: Sendable where Bridge: Sendable {}
+
+public struct DefaultsOptionalArrayBridge<Bridge: DefaultsBridge>: DefaultsBridge where Bridge.T: Collection {
     public typealias T = Bridge.T?
 
     private let bridge: Bridge
@@ -354,3 +368,5 @@ public struct DefaultsOptionalArrayBridge<Bridge: DefaultsBridge>: DefaultsBridg
         return bridge.deserialize(object)
     }
 }
+
+extension DefaultsOptionalArrayBridge: Sendable where Bridge: Sendable {}
