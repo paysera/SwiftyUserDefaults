@@ -49,6 +49,12 @@ import Foundation
     /// guarded by `lock`. The wrapped getter/setter reads and writes through the
     /// global `Defaults` adapter or one passed at init, both of which delegate to
     /// `UserDefaults` (documented thread-safe).
+    ///
+    /// `lock` is an `NSRecursiveLock` because the setter holds it across the
+    /// `Defaults[key:] = newValue` write, and that write triggers KVO. When
+    /// `.observed` is set, the KVO observer callback runs synchronously on the
+    /// same thread and re-enters the lock to update the cache. A non-recursive
+    /// lock would deadlock in that re-entry path.
     @propertyWrapper
     public final class SwiftyUserDefault<T: DefaultsSerializable>: @unchecked Sendable where T.T == T {
         public let key: DefaultsKey<T>
@@ -67,13 +73,13 @@ import Foundation
             }
             set {
                 lock.lock()
+                defer { lock.unlock() }
                 _value = newValue
-                lock.unlock()
                 Defaults[key: key] = newValue
             }
         }
 
-        private let lock = NSLock()
+        private let lock = NSRecursiveLock()
         private var _value: T.T?
         private var observation: (any DefaultsDisposable)?
 

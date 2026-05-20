@@ -24,15 +24,15 @@
 
 import Foundation
 
-public protocol DefaultsProviding {
+public protocol DefaultsProviding: Sendable {
     associatedtype KeyStore: DefaultsKeyStore
-    
-    subscript<T: DefaultsSerializable>(key key: DefaultsKey<T>) -> T.T where T: OptionalType, T.T == T { get nonmutating set }
-    subscript<T: DefaultsSerializable>(key key: DefaultsKey<T>) -> T.T where T.T == T { get nonmutating set }
-    subscript<T: DefaultsSerializable>(keyPath: KeyPath<KeyStore, DefaultsKey<T>>) -> T.T where T: OptionalType, T.T == T { get nonmutating set }
-    subscript<T: DefaultsSerializable>(keyPath: KeyPath<KeyStore, DefaultsKey<T>>) -> T.T where T.T == T { get nonmutating set }
-    subscript<T: DefaultsSerializable>(dynamicMember keyPath: KeyPath<KeyStore, DefaultsKey<T>>) -> T.T where T: OptionalType, T.T == T { get nonmutating set }
-    subscript<T: DefaultsSerializable>(dynamicMember keyPath: KeyPath<KeyStore, DefaultsKey<T>>) -> T.T where T.T == T { get nonmutating set }
+
+    subscript<T: DefaultsSerializable>(key _: DefaultsKey<T>) -> T.T where T: OptionalType, T.T == T { get nonmutating set }
+    subscript<T: DefaultsSerializable>(key _: DefaultsKey<T>) -> T.T where T.T == T { get nonmutating set }
+    subscript<T: DefaultsSerializable>(_: KeyPath<KeyStore, DefaultsKey<T>>) -> T.T where T: OptionalType, T.T == T { get nonmutating set }
+    subscript<T: DefaultsSerializable>(_: KeyPath<KeyStore, DefaultsKey<T>>) -> T.T where T.T == T { get nonmutating set }
+    subscript<T: DefaultsSerializable>(dynamicMember _: KeyPath<KeyStore, DefaultsKey<T>>) -> T.T where T: OptionalType, T.T == T { get nonmutating set }
+    subscript<T: DefaultsSerializable>(dynamicMember _: KeyPath<KeyStore, DefaultsKey<T>>) -> T.T where T.T == T { get nonmutating set }
 }
 
 extension DefaultsAdapter: DefaultsProviding {
@@ -94,7 +94,6 @@ extension DefaultsAdapter: DefaultsProviding {
 }
 
 public extension UserDefaults {
-
     subscript<T: DefaultsSerializable>(key: DefaultsKey<T>) -> T.T where T: OptionalType, T.T == T {
         get {
             if let value = T._defaults.get(key: key._key, userDefaults: self), let _value = value as? T.T.Wrapped {
