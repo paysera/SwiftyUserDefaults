@@ -87,19 +87,26 @@ final class SwiftyUserDefaultWrapperSpec: QuickSpec {
                 expect(host.counter).toEventually(equal(42))
             }
 
-            then("concurrent setters from many threads leave the cache and storage consistent") {
+            then("concurrent setters with distinct values leave cache and storage in agreement") {
                 let host = WrapperHost()
-                let target = 99
 
-                DispatchQueue.concurrentPerform(iterations: 50) { _ in
-                    host.counter = target
+                // Each thread writes its own distinct value. With a missing or
+                // half-scoped lock the cache and on-disk value can end up
+                // pointing at different writers. With the NSRecursiveLock fix
+                // (lock held across both writes) they must agree, whatever
+                // the winning value is.
+                DispatchQueue.concurrentPerform(iterations: 200) { i in
+                    host.counter = i + 1
                 }
 
-                // After all writes settle, cache and storage agree on the final value.
+                // Let any in-flight KVO callbacks settle before sampling.
+                Thread.sleep(forTimeInterval: 0.05)
+
                 let finalCache = host.counter
                 let finalStorage = userDefaults.integer(forKey: WrapperHost.keyStore.counter._key)
-                expect(finalCache) == target
-                expect(finalStorage) == target
+                expect(finalCache) == finalStorage
+                expect(finalCache) >= 1
+                expect(finalCache) <= 200
             }
 
             then("concurrent read and write does not crash") {

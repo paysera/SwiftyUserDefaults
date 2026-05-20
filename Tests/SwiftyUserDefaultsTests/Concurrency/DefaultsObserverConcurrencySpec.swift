@@ -47,8 +47,9 @@ final class DefaultsObserverConcurrencySpec: QuickSpec {
                 observer.dispose()
                 observer.dispose()
                 observer.dispose()
-                // No crash, no NSException from removeObserver.
-                expect(true) == true
+                // No crash, no NSException from `removeObserver` (the lock
+                // around `didRemoveObserver` covers the removal too).
+                expect(observer).toNot(beNil())
             }
 
             then("is safe under concurrent dispose calls from many threads") {
@@ -58,8 +59,8 @@ final class DefaultsObserverConcurrencySpec: QuickSpec {
                 DispatchQueue.concurrentPerform(iterations: 50) { _ in
                     observer.dispose()
                 }
-                // No crash, no double-removeObserver.
-                expect(true) == true
+                // No `removeObserver` double-removal exception under contention.
+                expect(observer).toNot(beNil())
             }
 
             then("stops delivering updates after dispose") {
@@ -89,14 +90,15 @@ final class DefaultsObserverConcurrencySpec: QuickSpec {
             then("delivers updates across concurrent writes without dropping") {
                 let key = DefaultsKey<Int>("counter", defaultValue: 0)
                 let received = Locked<Int>(0)
+                let defaultsRef = userDefaults!
 
-                let observer = userDefaults.observe(key) { _ in
+                let observer = defaultsRef.observe(key) { _ in
                     received.value += 1
                 }
                 defer { observer.dispose() }
 
                 DispatchQueue.concurrentPerform(iterations: 20) { i in
-                    userDefaults[key] = i
+                    defaultsRef[key] = i
                 }
 
                 expect(received.value).toEventually(equal(20), timeout: 3)
