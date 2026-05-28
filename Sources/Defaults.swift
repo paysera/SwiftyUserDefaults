@@ -24,18 +24,23 @@
 
 import Foundation
 
-/// Global shortcut for `UserDefaults.standard`
+// swiftlint:disable identifier_name prefixed_toplevel_constant
+/// Global shortcut for `UserDefaults.standard`.
 ///
 /// **Pro-Tip:** If you want to use shared user defaults, just
-///  redefine this global shortcut in your app target, like so:
-///  ~~~
-///  var Defaults = DefaultsAdapter(defaults: UserDefaults(suiteName: "com.my.app")!, keyStore: DefaultsKeys())
-///  ~~~
-
-public var Defaults = DefaultsAdapter<DefaultsKeys>(defaults: .standard, keyStore: .init())
+/// redefine this global shortcut in your app target, like so:
+/// ~~~
+/// var Defaults = DefaultsAdapter(defaults: UserDefaults(suiteName: "com.my.app")!, keyStore: DefaultsKeys())
+/// ~~~
+///
+/// `nonisolated(unsafe)` makes the mutation explicit under Swift 6 strict
+/// concurrency. The value type (`DefaultsAdapter`) is itself `Sendable`, so
+/// the only risk is the initial assignment race, which has always been the
+/// caller's responsibility to do at startup before any reads.
+public nonisolated(unsafe) var Defaults = DefaultsAdapter<DefaultsKeys>(defaults: .standard, keyStore: .init())
+// swiftlint:enable identifier_name prefixed_toplevel_constant
 
 public extension UserDefaults {
-
     /// Returns `true` if `key` exists
     func hasKey<T>(_ key: DefaultsKey<T>) -> Bool {
         return object(forKey: key._key) != nil
@@ -57,8 +62,7 @@ public extension UserDefaults {
     }
 }
 
-internal extension UserDefaults {
-
+extension UserDefaults {
     func number(forKey key: String) -> NSNumber? {
         return object(forKey: key) as? NSNumber
     }

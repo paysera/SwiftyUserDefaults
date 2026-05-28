@@ -24,8 +24,7 @@
 
 import Foundation
 
-public protocol DefaultsBridge {
-
+public protocol DefaultsBridge: Sendable {
     associatedtype T
 
     /// This method provides a way of saving your data in UserDefaults. Usually needed
@@ -49,7 +48,6 @@ public protocol DefaultsBridge {
 }
 
 public struct DefaultsObjectBridge<T>: DefaultsBridge {
-
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -60,13 +58,14 @@ public struct DefaultsObjectBridge<T>: DefaultsBridge {
         return userDefaults.object(forKey: key) as? T
     }
 
-    public func deserialize(_ object: Any) -> T? {
+    public func deserialize(_: Any) -> T? {
         return nil
     }
 }
 
-public struct DefaultsArrayBridge<T: Collection>: DefaultsBridge {
+extension DefaultsObjectBridge: Sendable where T: Sendable {}
 
+public struct DefaultsArrayBridge<T: Collection>: DefaultsBridge {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -77,13 +76,14 @@ public struct DefaultsArrayBridge<T: Collection>: DefaultsBridge {
         return userDefaults.array(forKey: key) as? T
     }
 
-    public func deserialize(_ object: Any) -> T? {
+    public func deserialize(_: Any) -> T? {
         return nil
     }
 }
 
-public struct DefaultsStringBridge: DefaultsBridge {
+extension DefaultsArrayBridge: Sendable where T: Sendable {}
 
+public struct DefaultsStringBridge: DefaultsBridge, Sendable {
     public init() {}
 
     public func save(key: String, value: String?, userDefaults: UserDefaults) {
@@ -94,13 +94,12 @@ public struct DefaultsStringBridge: DefaultsBridge {
         return userDefaults.string(forKey: key)
     }
 
-    public func deserialize(_ object: Any) -> String? {
+    public func deserialize(_: Any) -> String? {
         return nil
     }
 }
 
-public struct DefaultsIntBridge: DefaultsBridge {
-
+public struct DefaultsIntBridge: DefaultsBridge, Sendable {
     public init() {}
 
     public func save(key: String, value: Int?, userDefaults: UserDefaults) {
@@ -114,20 +113,20 @@ public struct DefaultsIntBridge: DefaultsBridge {
 
         // Fallback for launch arguments
         if let string = userDefaults.object(forKey: key) as? String,
-            let int = Int(string) {
+           let int = Int(string)
+        {
             return int
         }
 
         return nil
     }
 
-    public func deserialize(_ object: Any) -> Int? {
+    public func deserialize(_: Any) -> Int? {
         return nil
     }
 }
 
-public struct DefaultsDoubleBridge: DefaultsBridge {
-
+public struct DefaultsDoubleBridge: DefaultsBridge, Sendable {
     public init() {}
 
     public func save(key: String, value: Double?, userDefaults: UserDefaults) {
@@ -141,20 +140,20 @@ public struct DefaultsDoubleBridge: DefaultsBridge {
 
         // Fallback for launch arguments
         if let string = userDefaults.object(forKey: key) as? String,
-            let double = Double(string) {
+           let double = Double(string)
+        {
             return double
         }
 
         return nil
     }
 
-    public func deserialize(_ object: Any) -> Double? {
+    public func deserialize(_: Any) -> Double? {
         return nil
     }
 }
 
-public struct DefaultsBoolBridge: DefaultsBridge {
-
+public struct DefaultsBoolBridge: DefaultsBridge, Sendable {
     public init() {}
 
     public func save(key: String, value: Bool?, userDefaults: UserDefaults) {
@@ -175,13 +174,12 @@ public struct DefaultsBoolBridge: DefaultsBridge {
         return (userDefaults.object(forKey: key) as? String)?.bool
     }
 
-    public func deserialize(_ object: Any) -> Bool? {
+    public func deserialize(_: Any) -> Bool? {
         return nil
     }
 }
 
-public struct DefaultsDataBridge: DefaultsBridge {
-
+public struct DefaultsDataBridge: DefaultsBridge, Sendable {
     public init() {}
 
     public func save(key: String, value: Data?, userDefaults: UserDefaults) {
@@ -192,13 +190,12 @@ public struct DefaultsDataBridge: DefaultsBridge {
         return userDefaults.data(forKey: key)
     }
 
-    public func deserialize(_ object: Any) -> Data? {
+    public func deserialize(_: Any) -> Data? {
         return nil
     }
 }
 
-public struct DefaultsUrlBridge: DefaultsBridge {
-
+public struct DefaultsUrlBridge: DefaultsBridge, Sendable {
     public init() {}
 
     public func save(key: String, value: URL?, userDefaults: UserDefaults) {
@@ -228,7 +225,6 @@ public struct DefaultsUrlBridge: DefaultsBridge {
 }
 
 public struct DefaultsCodableBridge<T: Codable>: DefaultsBridge {
-
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -253,8 +249,9 @@ public struct DefaultsCodableBridge<T: Codable>: DefaultsBridge {
     }
 }
 
-public struct DefaultsKeyedArchiverBridge<T>: DefaultsBridge {
+extension DefaultsCodableBridge: Sendable where T: Sendable {}
 
+public struct DefaultsKeyedArchiverBridge<T>: DefaultsBridge {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -283,8 +280,9 @@ public struct DefaultsKeyedArchiverBridge<T>: DefaultsBridge {
     }
 }
 
-public struct DefaultsRawRepresentableBridge<T: RawRepresentable>: DefaultsBridge {
+extension DefaultsKeyedArchiverBridge: Sendable where T: Sendable {}
 
+public struct DefaultsRawRepresentableBridge<T: RawRepresentable>: DefaultsBridge {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -302,8 +300,9 @@ public struct DefaultsRawRepresentableBridge<T: RawRepresentable>: DefaultsBridg
     }
 }
 
-public struct DefaultsRawRepresentableArrayBridge<T: Collection>: DefaultsBridge where T.Element: RawRepresentable {
+extension DefaultsRawRepresentableBridge: Sendable where T: Sendable {}
 
+public struct DefaultsRawRepresentableArrayBridge<T: Collection>: DefaultsBridge where T.Element: RawRepresentable {
     public init() {}
 
     public func save(key: String, value: T?, userDefaults: UserDefaults) {
@@ -322,8 +321,9 @@ public struct DefaultsRawRepresentableArrayBridge<T: Collection>: DefaultsBridge
     }
 }
 
-public struct DefaultsOptionalBridge<Bridge: DefaultsBridge>: DefaultsBridge {
+extension DefaultsRawRepresentableArrayBridge: Sendable where T: Sendable {}
 
+public struct DefaultsOptionalBridge<Bridge: DefaultsBridge>: DefaultsBridge {
     public typealias T = Bridge.T?
 
     private let bridge: Bridge
@@ -344,9 +344,10 @@ public struct DefaultsOptionalBridge<Bridge: DefaultsBridge>: DefaultsBridge {
         return bridge.deserialize(object)
     }
 }
+
+extension DefaultsOptionalBridge: Sendable where Bridge: Sendable {}
 
 public struct DefaultsOptionalArrayBridge<Bridge: DefaultsBridge>: DefaultsBridge where Bridge.T: Collection {
-
     public typealias T = Bridge.T?
 
     private let bridge: Bridge
@@ -367,3 +368,5 @@ public struct DefaultsOptionalArrayBridge<Bridge: DefaultsBridge>: DefaultsBridg
         return bridge.deserialize(object)
     }
 }
+
+extension DefaultsOptionalArrayBridge: Sendable where Bridge: Sendable {}

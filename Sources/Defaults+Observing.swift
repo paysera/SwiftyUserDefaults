@@ -26,28 +26,40 @@ import Foundation
 
 #if !os(Linux)
 
-public extension DefaultsAdapter {
+    public extension DefaultsAdapter {
+        /// Observe changes on a `UserDefaults` key.
+        ///
+        /// The `handler` is invoked on whichever thread posts the KVO notification
+        /// (typically the writer's thread). It is not guaranteed to run on the
+        /// main thread. Dispatch onto your own actor or queue inside the handler
+        /// if you need a specific isolation.
+        func observe<T: DefaultsSerializable>(_ key: DefaultsKey<T>,
+                                              options: NSKeyValueObservingOptions = [.new, .old],
+                                              handler: @escaping @Sendable (DefaultsObserver<T>.Update) -> Void) -> DefaultsDisposable
+        {
+            return defaults.observe(key, options: options, handler: handler)
+        }
 
-    func observe<T: DefaultsSerializable>(_ key: DefaultsKey<T>,
-                                          options: NSKeyValueObservingOptions = [.new, .old],
-                                          handler: @escaping (DefaultsObserver<T>.Update) -> Void) -> DefaultsDisposable {
-        return defaults.observe(key, options: options, handler: handler)
+        /// Observe changes on a `UserDefaults` key path.
+        ///
+        /// The `handler` is invoked on whichever thread posts the KVO notification
+        /// (typically the writer's thread). It is not guaranteed to run on the
+        /// main thread. Dispatch onto your own actor or queue inside the handler
+        /// if you need a specific isolation.
+        func observe<T: DefaultsSerializable>(_ keyPath: KeyPath<KeyStore, DefaultsKey<T>>,
+                                              options: NSKeyValueObservingOptions = [.old, .new],
+                                              handler: @escaping @Sendable (DefaultsObserver<T>.Update) -> Void) -> DefaultsDisposable
+        {
+            return defaults.observe(keyStore[keyPath: keyPath],
+                                    options: options,
+                                    handler: handler)
+        }
     }
 
-    func observe<T: DefaultsSerializable>(_ keyPath: KeyPath<KeyStore, DefaultsKey<T>>,
-                                          options: NSKeyValueObservingOptions = [.old, .new],
-                                          handler: @escaping (DefaultsObserver<T>.Update) -> Void) -> DefaultsDisposable {
-        return defaults.observe(keyStore[keyPath: keyPath],
-                                options: options,
-                                handler: handler)
+    public extension UserDefaults {
+        func observe<T: DefaultsSerializable>(_ key: DefaultsKey<T>, options: NSKeyValueObservingOptions = [.old, .new], handler: @escaping @Sendable (DefaultsObserver<T>.Update) -> Void) -> DefaultsDisposable {
+            return DefaultsObserver(key: key, userDefaults: self, options: options, handler: handler)
+        }
     }
-}
-
-public extension UserDefaults {
-
-    func observe<T: DefaultsSerializable>(_ key: DefaultsKey<T>, options: NSKeyValueObservingOptions = [.old, .new], handler: @escaping (DefaultsObserver<T>.Update) -> Void) -> DefaultsDisposable {
-        return DefaultsObserver(key: key, userDefaults: self, options: options, handler: handler)
-    }
-}
 
 #endif

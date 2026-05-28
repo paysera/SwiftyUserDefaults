@@ -15,7 +15,6 @@ func then(_ description: String, closure: @escaping () -> Void) {
 }
 
 extension UserDefaults {
-
     func cleanObjects() {
         for (key, _) in dictionaryRepresentation() {
             removeObject(forKey: key)
@@ -24,7 +23,6 @@ extension UserDefaults {
 }
 
 struct FrogCodable: Codable, Equatable, DefaultsSerializable {
-
     let name: String
 
     init(name: String = "Froggy") {
@@ -32,8 +30,7 @@ struct FrogCodable: Codable, Equatable, DefaultsSerializable {
     }
 }
 
-final class FrogSerializable: NSObject, DefaultsSerializable, NSCoding {
-
+final class FrogSerializable: NSObject, DefaultsSerializable, NSCoding, @unchecked Sendable {
     typealias T = FrogSerializable
 
     let name: String
@@ -60,7 +57,6 @@ final class FrogSerializable: NSObject, DefaultsSerializable, NSCoding {
 }
 
 enum BestFroggiesEnum: String, DefaultsSerializable {
-
     case Andy
     case Dandy
 }
@@ -102,17 +98,39 @@ final class DefaultsFrogArrayBridge: DefaultsBridge {
 }
 
 struct FrogCustomSerializable: DefaultsSerializable, Equatable {
-
     static var _defaults: DefaultsFrogBridge { return DefaultsFrogBridge() }
     static var _defaultsArray: DefaultsFrogArrayBridge { return DefaultsFrogArrayBridge() }
 
     let name: String
 }
 
-final class FrogKeyStore<Serializable: DefaultsSerializable & Equatable>: DefaultsKeyStore {
-
+final class FrogKeyStore<Serializable: DefaultsSerializable & Equatable & Sendable>: DefaultsKeyStore, @unchecked Sendable where Serializable.T: Sendable, Serializable.ArrayBridge.T: Sendable {
     lazy var testValue: DefaultsKey<Serializable> = { fatalError("not initialized yet") }()
     lazy var testArray: DefaultsKey<[Serializable]> = { fatalError("not initialized yet") }()
     lazy var testOptionalValue: DefaultsKey<Serializable?> = { fatalError("not initialized yet") }()
     lazy var testOptionalArray: DefaultsKey<[Serializable]?> = { fatalError("not initialized yet") }()
+}
+
+/// Thread-safe holder used in observer tests so handler closures can update a
+/// captured value across actor boundaries.
+final class Locked<Value>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _value: Value
+
+    init(_ initial: Value) {
+        _value = initial
+    }
+
+    var value: Value {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _value
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            _value = newValue
+        }
+    }
 }
